@@ -1,0 +1,34 @@
+{
+  "name": "react-native-use-on-change",
+  "version": "0.0.1",
+  "main": "useOnChange.js",
+  "description": "Easy to use hook.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GeorgeHop/react-native-use-on-change.git"
+  },
+  "keywords": [
+    "react-native",
+    "react",
+    "native",
+    "expo",
+    "hook",
+    "form",
+    "crossplatform",
+    "ios",
+    "android"
+  ],
+  "contributors": [
+    {
+      "name": "Mutovkin Yurii",
+      "email": "georgehopekek@gmail.com",
+      "url": "https://github.com/GeorgeHop"
+    }
+  ],
+  "author": "George Hope",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GeorgeHop/react-native-use-on-change/issues"
+  },
+  "homepage": "https://github.com/GeorgeHop/react-native-use-on-change#readme"
+}
