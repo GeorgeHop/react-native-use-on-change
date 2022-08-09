@@ -1,6 +1,6 @@
 {
   "name": "react-native-use-on-change",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "useOnChange.js",
   "description": "Easy to use hook.",
   "repository": {

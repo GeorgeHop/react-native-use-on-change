@@ -17,6 +17,11 @@ export const isRequired = message => value => value ? '' : message;
 
 export const isValueEqual = (fieldName, message) => (value, fields) => fields[fieldName] === value ? '' : message;
 
+export const isPhoneValid = message => value => {
+    const re = /(?:(?:(\s*\(?([2-9]1[02-9]|[2-9][02-8]1|[2-9][02-8][02-9])\s*)|([2-9]1[02-9]|[2-9][02-8]1|[2-9][02-8][02-9]))\)?\s*(?:[.-]\s*)?)([2-9]1[02-9]|[2-9][02-9]1|[2-9][02-9]{2})\s*(?:[.-]\s*)?([0-9]{4})/;
+    return re.test(value) ? '' : message;
+};
+
 export const isEmailValid = message => email => {
     const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     return re.test(String(email).toLowerCase()) ? '' : message;
@@ -34,6 +39,4 @@ export const isValidHex = message => color => {
         case 8: return /^[0-9A-F]{8}$/i.test(color) && "";
         default: return message;
     }
-
-    return message;
 };
