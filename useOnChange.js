@@ -100,6 +100,27 @@ export default function useOnChange(settings = {}) {
         // }
     }, [saving, settings?.config?.shouldChangeOnUpdate]);
 
+
+    React.useEffect(() => {
+        const config = settings?.canSaveConfig;
+
+        if (config?.cantSaveUnchanged) {
+            let formFields = Object.keys(settings.validators);
+
+            if (formFields?.length) {
+                let initialErrors = {};
+
+                formFields?.forEach((field) => {
+                    if (initialState?.[field]?.length) {
+                        initialErrors[field] = '';
+                    }
+                });
+
+                setErrors(initialErrors);
+            }
+        }
+    },[]);
+
     const canSave = React.useMemo(() => {
         const canSave = settings?.canSaveConfig?.canSave;
         const canSaveConfig = settings?.canSaveConfig;
