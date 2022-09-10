@@ -1,91 +1,14 @@
 import React, {useRef} from 'react';
 import {isEmailValid, isEmptyObject, isRequired, maxLength, minLength} from "./helpers/validateFunctions";
+import {Settings} from "./types/Types";
+import {defaultValidation, objectsEqual} from "./helpers/hookHelpers";
 
-// Sample settings which you should put inside hook when call
-const settingsSample = {
-    // Basic initial state
-    initialState: {
-        fieldName1: '',
-        fieldName2: 'georgehopekek@gmail.com',
-    },
-    // Rules to validate onChange data
-    validators: {
-        fieldName1: [
-            isRequired(),
-            minLength(5),
-            maxLength(30),
-        ],
-        fieldName2: [
-            isEmailValid(),
-        ]
-    },
-    config: {
-        //fetchMethod: API.User.profile,
-        dispatchMethod: () => {
-        },
-        onSuccessAction: () => console.log('action'),
-        successMessage: '',
-        // Data keys on which hook state should be changed
-        shouldChangeOnUpdate: 'state',
-        shouldCleanupOnSave: false
-    },
-    // Here you can define your own validation function or use predefined string values like allowInitial
-    // or false if you want just disable canSave or don't put anything and give validation to hook
-    canSaveConfig: {
-        cantSaveUnchanged: false,
-        canSave: false,
-        validationFunction: () => {
-        }
-    }, // function, boolean, string
-};
-
-// ToDo if validators not specified and canSave config empty doesn't fire canSave function
-const newCanSaveSample = {
-    cantSaveUnchanged: false,
-    canSave: false,
-    validationFunction: () => {
-    }
-};
-
-const objectsEqual = (obj1, obj2) => {
-    let aProps = Object.getOwnPropertyNames(obj1);
-    let bProps = Object.getOwnPropertyNames(obj2);
-
-    if (aProps.length !== bProps.length) return false;
-
-    for (let i = 0; i < aProps.length; i++) {
-        let propName = aProps[i];
-
-        if (obj1[propName] !== obj2[propName]) return false;
-    }
-
-    return true;
-};
-
-const arraysEqual = (aArr, bArr) => {
-    const a = aArr.sort();
-    const b = bArr.sort();
-
-    if (a === b) return true;
-    if (a == null || b == null) return false;
-    if (a.length !== b.length) return false;
-
-    for (let i = 0; i < a.length; ++i) {
-        if (a[i] !== b[i]) return false;
-    }
-
-    return true;
-};
-
-const errorsValuesExist = errors => Object.values(errors).some(value => value !== '');
-const defaultValidation = (errors, settings) => (arraysEqual(Object.keys(errors), Object.keys(settings?.validators)) && !errorsValuesExist(errors));
-
-export default function useOnChange(settings = {}) {
+export default function useOnChange(settings:Settings) {
     const initialState = settings?.initialState;
-    const [saving, setSaving] = React.useState(false);
-    const [data, setData] = React.useState(null);
-    const [errors, setErrors] = React.useState({});
-    const canSaveErrors = {};
+    const [saving, setSaving] = React.useState<boolean>(false);
+    const [data, setData] = React.useState<object|null>(null);
+    const [errors, setErrors] = React.useState<object>({});
+    const canSaveErrors:{[key:string]: boolean} = {};
 
     React.useEffect(() => {
         setData({...initialState});
@@ -100,15 +23,16 @@ export default function useOnChange(settings = {}) {
         // }
     }, [saving, settings?.config?.shouldChangeOnUpdate]);
 
-
+    // This part checking existing fields and fills errors based on data inside
     React.useEffect(() => {
         const config = settings?.canSaveConfig;
 
-        if (config?.cantSaveUnchanged) {
+        // If we don't have validators we skip this part
+        if (config?.cantSaveUnchanged && !!settings?.validators) {
             let formFields = Object.keys(settings.validators);
 
             if (formFields?.length) {
-                let initialErrors = {};
+                let initialErrors:{[key: string]: string} = {};
 
                 formFields?.forEach((field) => {
                     if (initialState?.[field]?.length) {
@@ -119,7 +43,7 @@ export default function useOnChange(settings = {}) {
                 setErrors(initialErrors);
             }
         }
-    },[]);
+    }, []);
 
     const canSave = React.useMemo(() => {
         const canSave = settings?.canSaveConfig?.canSave;
@@ -128,7 +52,7 @@ export default function useOnChange(settings = {}) {
         if (!canSaveConfig)
             return null;
 
-        if ((isEmptyObject(settings?.validators) && isEmptyObject(canSaveConfig)) || (!!canSaveConfig && canSave === false))
+        if (settings?.validators && (isEmptyObject(settings?.validators) && isEmptyObject(canSaveConfig)) || (!!canSaveConfig && canSave === false))
             return null;
 
         // If nothing we just checking if no error returns and fields not empty
@@ -145,7 +69,7 @@ export default function useOnChange(settings = {}) {
         return Object.values(canSaveErrors).every(item => !!item);
     }, [data, errors, settings.canSaveConfig]);
 
-    const onChange = obj => {
+    const onChange = (obj: {name: string, value: any}) => {
         let fieldName = obj.name;
         let fieldValue = obj.value;
 
@@ -157,7 +81,7 @@ export default function useOnChange(settings = {}) {
         validateData(fieldName, fieldValue);
     };
 
-    const validateData = (fieldName, fieldValue) => {
+    const validateData = (fieldName: string, fieldValue: any) => {
         if (!!settings?.validators && !isEmptyObject(settings?.validators) && !!settings.validators[fieldName]) {
             let valueValidators = settings.validators?.[fieldName];
             let validationError;
@@ -195,7 +119,7 @@ export default function useOnChange(settings = {}) {
         let {config} = settings;
         let onFinalSaved = false;
 
-        if (!isEmptyObject(config) && (!!canSave || canSave === null)) {
+        if (config && !isEmptyObject(config) && (!!canSave || canSave === null)) {
             setSaving(true);
 
             if (typeof config?.fetchMethod === 'function') {
