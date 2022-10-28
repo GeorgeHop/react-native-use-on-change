@@ -3,14 +3,12 @@ export interface InitialState {
 }
 
 export interface Validators {
-    [key: string]: [
-        (...args: any) => boolean|string
-    ]
+    [key: string]: Array<(...args: any) => boolean|string>
 }
 
 export interface Config {
-    shouldChangeOnUpdate: any,
-    shouldCleanupOnSave: boolean,
+    shouldChangeOnUpdate?: any,
+    shouldCleanupOnSave?: boolean,
     fetchMethod: (data: any) => Promise<any>,
     onSuccessAction?: (data: any) => void,
 }
@@ -24,11 +22,7 @@ export interface CanSaveConfig {
 
 export interface Settings {
     initialState: InitialState,
-    validators?: {
-        [key: string]: [
-            (...args: any) => boolean|string
-        ]
-    },
+    validators?: Validators,
     config?: Config,
     canSaveConfig?: CanSaveConfig
 }

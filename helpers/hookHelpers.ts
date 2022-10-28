@@ -1,19 +1,6 @@
-import {Settings} from "../types/Types";
+import {InitialState, Settings, Validators} from "../types/Types";
 
-export const objectsEqual = (obj1: {[key: string]: any}, obj2: {[key: string]: any}) => {
-    let aProps = Object.getOwnPropertyNames(obj1);
-    let bProps = Object.getOwnPropertyNames(obj2);
-
-    if (aProps.length !== bProps.length) return false;
-
-    for (let i = 0; i < aProps.length; i++) {
-        let propName = aProps[i];
-
-        if (obj1[propName] !== obj2[propName]) return false;
-    }
-
-    return true;
-};
+export const objectsEqual = (obj1: {[key: string]: any}, obj2: {[key: string]: any}) => JSON.stringify(obj1) === JSON.stringify(obj2);
 
 export const arraysEqual = (aArr: any[], bArr: any[]) => {
     const a = aArr.sort();
@@ -28,6 +15,20 @@ export const arraysEqual = (aArr: any[], bArr: any[]) => {
     }
 
     return true;
+};
+
+export const getEqualValidationValues = (obj: InitialState, values: Validators|undefined) => {
+    let newObj = {};
+
+    if (!obj)
+        return newObj;
+
+    for (const [key, value] of Object.entries(obj)) {
+        if (!!values && values.hasOwnProperty(key))
+            newObj[key] = value;
+    }
+
+    return newObj;
 };
 
 export const errorsValuesExist = (errors: {[key: string]: any}) => Object.values(errors).some(value => value !== '');

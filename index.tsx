@@ -1,9 +1,9 @@
 import React, {useRef} from 'react';
 import {isEmailValid, isEmptyObject, isRequired, maxLength, minLength} from "./helpers/validateFunctions";
 import {Settings} from "./types/Types";
-import {defaultValidation, objectsEqual} from "./helpers/hookHelpers";
+import {defaultValidation, getEqualValidationValues, objectsEqual} from "./helpers/hookHelpers";
 
-export default function useOnChange(settings:Settings) {
+export default function useOnChange<T>(settings:Settings) {
     const initialState = settings?.initialState;
     const [saving, setSaving] = React.useState<boolean>(false);
     const [data, setData] = React.useState<object|null>(null);
@@ -13,14 +13,14 @@ export default function useOnChange(settings:Settings) {
     React.useEffect(() => {
         setData({...initialState});
         setErrors({});
-        // let formFields = Object.keys(settings.validators);
-        //
-        // if (formFields?.length) {
-        //     formFields?.forEach((field) => {
-        //         if (initialState?.[field]?.length)
-        //             validateData(field, initialState?.[field]);
-        //     });
-        // }
+        let formFields = settings?.validators && Object.keys(settings.validators);
+
+        if (formFields?.length) {
+            formFields?.forEach((field) => {
+                if (initialState?.[field]?.length)
+                    validateData(field, initialState?.[field]);
+            });
+        }
     }, [saving, settings?.config?.shouldChangeOnUpdate]);
 
     // This part checking existing fields and fills errors based on data inside
@@ -49,6 +49,10 @@ export default function useOnChange(settings:Settings) {
         const canSave = settings?.canSaveConfig?.canSave;
         const canSaveConfig = settings?.canSaveConfig;
 
+        // We get only those fiends which added in validators array
+        const initialStateToCheck = getEqualValidationValues(initialState, settings?.validators);
+        const dataToCheck = getEqualValidationValues(data, settings?.validators);
+
         if (!canSaveConfig)
             return null;
 
@@ -64,7 +68,7 @@ export default function useOnChange(settings:Settings) {
             canSaveErrors['userValidation'] = canSaveConfig?.validationFunction(data, errors, initialState);
 
         if (!!canSaveConfig && canSaveConfig?.cantSaveUnchanged && !!data && !!initialState)
-            canSaveErrors['equalDataValidation'] = !objectsEqual(data, initialState);
+            canSaveErrors['equalDataValidation'] = !objectsEqual(initialStateToCheck, dataToCheck);
 
         return Object.values(canSaveErrors).every(item => !!item);
     }, [data, errors, settings.canSaveConfig]);
