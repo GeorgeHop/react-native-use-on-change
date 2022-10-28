@@ -3,7 +3,7 @@ import {isEmailValid, isEmptyObject, isRequired, maxLength, minLength} from "./h
 import {Settings} from "./types/Types";
 import {defaultValidation, getEqualValidationValues, objectsEqual} from "./helpers/hookHelpers";
 
-export default function useOnChange<T>(settings:Settings) {
+export default function useOnChange<T>(settings:Settings, deps = []) {
     const initialState = settings?.initialState;
     const [saving, setSaving] = React.useState<boolean>(false);
     const [data, setData] = React.useState<object|null>(null);
@@ -71,7 +71,7 @@ export default function useOnChange<T>(settings:Settings) {
             canSaveErrors['equalDataValidation'] = !objectsEqual(initialStateToCheck, dataToCheck);
 
         return Object.values(canSaveErrors).every(item => !!item);
-    }, [data, errors, settings.canSaveConfig]);
+    }, [data, errors, settings.canSaveConfig, deps]);
 
     const onChange = (obj: {name: string, value: any}) => {
         let fieldName = obj.name;

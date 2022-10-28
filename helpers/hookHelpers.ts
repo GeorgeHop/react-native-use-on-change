@@ -17,7 +17,7 @@ export const arraysEqual = (aArr: any[], bArr: any[]) => {
     return true;
 };
 
-export const getEqualValidationValues = (obj: InitialState, values: Validators|undefined) => {
+export const getEqualValidationValues = (obj: InitialState|null, values: Validators|undefined) => {
     let newObj = {};
 
     if (!obj)
