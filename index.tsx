@@ -6,6 +6,7 @@ import {defaultValidation, getEqualValidationValues, objectsEqual} from "./helpe
 export default function useOnChange<T>(settings:Settings, deps = []) {
     const initialState = settings?.initialState;
     const [saving, setSaving] = React.useState<boolean>(false);
+    const [toggledCanSave, setToggleCanSave] = React.useState<boolean|null>(null);
     const [data, setData] = React.useState<object|null>(null);
     const [errors, setErrors] = React.useState<object>({});
     const canSaveErrors:{[key:string]: boolean} = {};
@@ -63,15 +64,17 @@ export default function useOnChange<T>(settings:Settings, deps = []) {
         if (!canSaveConfig?.defaultValidation)
             canSaveErrors['defaultValidation'] = defaultValidation(errors, settings);
 
+        if (!!canSaveConfig && canSaveConfig?.cantSaveUnchanged && !!data && !!initialState)
+            canSaveErrors['equalDataValidation'] = !objectsEqual(initialStateToCheck, dataToCheck);
+
         // If function exist in settings
         if (!!canSaveConfig && typeof canSaveConfig?.validationFunction === 'function')
             canSaveErrors['userValidation'] = canSaveConfig?.validationFunction(data, errors, initialState);
 
-        if (!!canSaveConfig && canSaveConfig?.cantSaveUnchanged && !!data && !!initialState)
-            canSaveErrors['equalDataValidation'] = !objectsEqual(initialStateToCheck, dataToCheck);
+        return (toggledCanSave || Object.values(canSaveErrors).every(item => !!item));
+    }, [data, errors, settings.canSaveConfig]);
 
-        return Object.values(canSaveErrors).every(item => !!item);
-    }, [data, errors, settings.canSaveConfig, deps]);
+    const toggleCanSave = (value: boolean) => setToggleCanSave(value);
 
     const onChange = (obj: {name: string, value: any}) => {
         let fieldName = obj.name;
@@ -149,6 +152,7 @@ export default function useOnChange<T>(settings:Settings, deps = []) {
         errors,
         canSave,
         requestFunction,
-        saving
+        saving,
+        toggleCanSave
     ];
 };
