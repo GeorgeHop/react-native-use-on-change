@@ -2,6 +2,13 @@ import React, {useRef} from 'react';
 import {isEmailValid, isEmptyObject, isRequired, maxLength, minLength} from "./helpers/validateFunctions";
 import {Settings} from "./types/Types";
 import {defaultValidation, getEqualValidationValues, objectsEqual} from "./helpers/hookHelpers";
+import {err} from "react-native-svg/lib/typescript/xml";
+import {validators} from "../../entities/record";
+
+interface Target {
+    name: string,
+    value: any
+}
 
 export default function useOnChange<T>(settings:Settings, deps = []) {
     const initialState = settings?.initialState;
@@ -76,16 +83,44 @@ export default function useOnChange<T>(settings:Settings, deps = []) {
 
     const toggleCanSave = (value: boolean) => setToggleCanSave(value);
 
-    const onChange = (obj: {name: string, value: any}) => {
-        let fieldName = obj.name;
-        let fieldValue = obj.value;
+    // Supports single or multi value
+    const onChange = (target: Target|Target[]) => {
+        if (Array.isArray(target)) {
+            let preparedData = target?.reduce((acc, curr) => {
+                let fieldName = curr.name;
+                let fieldValue = curr.value;
+                acc[fieldName] = fieldValue;
 
-        setData({
-            ...data,
-            [fieldName]: fieldValue
+                return acc;
+            }, {});
+
+            let saveData = {
+                ...data,
+                ...preparedData
+            };
+
+            multiValidate(preparedData);
+            return;
+        }
+
+        if (typeof target === "object" && target.hasOwnProperty('name') && target.hasOwnProperty('value')) {
+            let fieldName = target.name;
+            let fieldValue = target.value;
+            let newData = {
+                ...data,
+                [fieldName]: fieldValue
+            };
+
+            setData(newData);
+
+            validateData(fieldName, fieldValue);
+        }
+    };
+
+    const multiValidate = (fields: object) => {
+        Object.keys(fields)?.forEach(key => {
+            validateData(key, fields[key]);
         });
-
-        validateData(fieldName, fieldValue);
     };
 
     const validateData = (fieldName: string, fieldValue: any) => {
