@@ -14,7 +14,7 @@ export default function useOnChange<T>(settings:Settings, deps = []) {
     const initialState = settings?.initialState;
     const [saving, setSaving] = React.useState<boolean>(false);
     const [toggledCanSave, setToggleCanSave] = React.useState<boolean|null>(null);
-    const [data, setData] = React.useState<object|null>(null);
+    const [data, setData] = React.useState<object|null>(initialState);
     const [errors, setErrors] = React.useState<object>({});
     const canSaveErrors:{[key:string]: boolean} = {};
 
