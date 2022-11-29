@@ -2,8 +2,6 @@ import React, {useRef} from 'react';
 import {isEmailValid, isEmptyObject, isRequired, maxLength, minLength} from "./helpers/validateFunctions";
 import {Settings} from "./types/Types";
 import {defaultValidation, getEqualValidationValues, objectsEqual} from "./helpers/hookHelpers";
-import {err} from "react-native-svg/lib/typescript/xml";
-import {validators} from "../../entities/record";
 
 interface Target {
     name: string,
@@ -29,7 +27,7 @@ export default function useOnChange<T>(settings:Settings, deps = []) {
                     validateData(field, initialState?.[field]);
             });
         }
-    }, [saving, settings?.config?.shouldChangeOnUpdate]);
+    }, [saving, ...deps]);
 
     // This part checking existing fields and fills errors based on data inside
     React.useEffect(() => {
