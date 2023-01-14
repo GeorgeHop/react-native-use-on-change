@@ -31,17 +31,35 @@ export default function useOnChange<T>(settings:Settings, deps = []) {
 
     // This part checking existing fields and fills errors based on data inside
     React.useEffect(() => {
+        checkErrors();
+    }, []);
+
+    const checkErrors = (cantSaveUnchanged = true) => {
         const config = settings?.canSaveConfig;
 
         // If we don't have validators we skip this part
-        if (config?.cantSaveUnchanged && !!settings?.validators) {
+        if (!!settings?.validators) {
             let formFields = Object.keys(settings.validators);
 
             if (formFields?.length) {
                 let initialErrors:{[key: string]: string} = {};
 
+                // Check each declarated field
                 formFields?.forEach((field) => {
-                    if (initialState?.[field]?.length) {
+                    const isRequired = !!settings.validators?.[field]?.find(val => val?.name === 'required');
+
+                    console.log(initialState)
+
+                    // Check
+                    if ((config?.cantSaveUnchanged && initialState?.[field]?.length)) {
+                        initialErrors[field] = '';
+                        // Skip not required fields
+                    } else if (!isRequired) {
+                        initialErrors[field] = '';
+                        // Validate initial state filled fields
+                        // ToDo this part doesnt work and don't validate data... Why?
+                    } else if (initialState?.[field]?.length && settings?.validators?.[field]) {
+                        // Check all validators
                         initialErrors[field] = '';
                     }
                 });
@@ -49,7 +67,7 @@ export default function useOnChange<T>(settings:Settings, deps = []) {
                 setErrors(initialErrors);
             }
         }
-    }, []);
+    };
 
     const canSave = React.useMemo(() => {
         const canSave = settings?.canSaveConfig?.canSave;

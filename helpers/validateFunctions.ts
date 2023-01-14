@@ -13,7 +13,13 @@ export const maxLength = (maxLength: number, message: any) => (value: string) =>
 
 export const notZero = (message: any) => (value: string) => Number(value) === 0 ? message : '';
 
-export const isRequired = (message: any) => (value: any) => value ? '' : message;
+export const isRequired = (message: any) => {
+    function required(value: any) {
+        return  value ? '' : message;
+    }
+
+    return required;
+};
 
 export const isValueEqual = (fieldName: string, message: any) => (value: string, fields: object) => fields[fieldName as keyof typeof fields] === value ? '' : message;
 
