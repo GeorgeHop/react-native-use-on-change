@@ -1,6 +1,6 @@
 {
   "name": "react-native-use-on-change",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "main": "index.tsx",
   "description": "Easy to use hook.",
   "repository": {

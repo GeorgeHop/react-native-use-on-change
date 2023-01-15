@@ -47,16 +47,12 @@ export default function useOnChange<T>(settings:Settings, deps = []) {
                 // Check each declarated field
                 formFields?.forEach((field) => {
                     const validate = validateField(field, initialState?.[field]);
-                    const isRequired = !!settings.validators?.[field]?.find(val => val?.name === 'required');
 
                     // We setup errors for cantSaveUnchanged to proper validate all values
                     if ((config?.cantSaveUnchanged && initialState?.[field]?.length)) {
                         initialErrors[field] = '';
                         // Skip not required fields (For cases when form has few not required fields)
-                    } else if (!isRequired) {
-                        initialErrors[field] = validate;
-                        // Validate initial state filled fields
-                    } else if (initialState?.[field]?.length && settings?.validators?.[field]) {
+                    } else if ((initialState?.[field]?.length && settings?.validators?.[field]) || (initialState?.[field]?.length === 0 && settings?.validators?.[field] && !validate)) {
                         // Check all validators
                         initialErrors[field] = validate;
                     }
