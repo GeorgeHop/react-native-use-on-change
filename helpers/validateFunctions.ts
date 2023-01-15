@@ -7,7 +7,7 @@ export const isEmptyObject = (obj: object) => obj && Object.keys(obj).length ===
 
 // Validations generator
 
-export const minLength = (minLength: number, message: any) => (value: string) => value?.replace(/ /g, '')?.length < minLength ? message : '';
+export const minLength = (minLength: number, message: any) => (value: string) => value?.replace(/ /g, '')?.length > 0 && value?.replace(/ /g, '')?.length < minLength ? message : '';
 
 export const maxLength = (maxLength: number, message: any) => (value: string) => value?.replace(/ /g, '')?.length > maxLength ? message : '';
 
@@ -15,7 +15,7 @@ export const notZero = (message: any) => (value: string) => Number(value) === 0 
 
 export const isRequired = (message: any) => {
     function required(value: any) {
-        return  value ? '' : message;
+        return value ? '' : message;
     }
 
     return required;

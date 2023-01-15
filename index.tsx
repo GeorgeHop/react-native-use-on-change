@@ -46,21 +46,19 @@ export default function useOnChange<T>(settings:Settings, deps = []) {
 
                 // Check each declarated field
                 formFields?.forEach((field) => {
+                    const validate = validateField(field, initialState?.[field]);
                     const isRequired = !!settings.validators?.[field]?.find(val => val?.name === 'required');
 
-                    console.log(initialState)
-
-                    // Check
+                    // We setup errors for cantSaveUnchanged to proper validate all values
                     if ((config?.cantSaveUnchanged && initialState?.[field]?.length)) {
                         initialErrors[field] = '';
-                        // Skip not required fields
+                        // Skip not required fields (For cases when form has few not required fields)
                     } else if (!isRequired) {
-                        initialErrors[field] = '';
+                        initialErrors[field] = validate;
                         // Validate initial state filled fields
-                        // ToDo this part doesnt work and don't validate data... Why?
                     } else if (initialState?.[field]?.length && settings?.validators?.[field]) {
                         // Check all validators
-                        initialErrors[field] = '';
+                        initialErrors[field] = validate;
                     }
                 });
 
@@ -139,14 +137,30 @@ export default function useOnChange<T>(settings:Settings, deps = []) {
         });
     };
 
+    const validateField = (fieldName: string, fieldValue: any) => {
+        let valueValidators = settings.validators?.[fieldName];
+        let validationError;
+
+        for (let validationFunc of valueValidators) {
+            if (!!validationFunc(fieldValue, data)) {
+                validationError = validationFunc(fieldValue, data);
+                break;
+            }
+        }
+
+        return !validationError ? '' : validationError;
+    };
+
     const validateData = (fieldName: string, fieldValue: any) => {
         if (!!settings?.validators && !isEmptyObject(settings?.validators) && !!settings.validators[fieldName]) {
             let valueValidators = settings.validators?.[fieldName];
             let validationError;
 
             for (let validationFunc of valueValidators) {
-                if (!!validationFunc(fieldValue, data)) {
-                    validationError = validationFunc(fieldValue, data);
+                const validate = validationFunc(fieldValue, data);
+
+                if (validate) {
+                    validationError = validate;
                     break;
                 }
             }
