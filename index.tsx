@@ -8,13 +8,25 @@ interface Target {
     value: any
 }
 
-export default function useOnChange<T>(settings:Settings, deps = []) {
-    const initialState = settings?.initialState;
+export default function useOnChange<T>(
+    settings: Settings,
+    deps: any[] = []
+): [
+        T | null,
+    (target: Target | Target[]) => void,
+    { [key: string]: string },
+        boolean | null,
+    () => void,
+    boolean,
+    (value: boolean) => void
+] {
+    const initialState = settings?.initialState || null;
     const [saving, setSaving] = React.useState<boolean>(false);
-    const [toggledCanSave, setToggleCanSave] = React.useState<boolean|null>(null);
-    const [data, setData] = React.useState<object|null>(initialState);
-    const [errors, setErrors] = React.useState<object>({});
-    const canSaveErrors:{[key:string]: boolean} = {};
+    const [toggledCanSave, setToggleCanSave] = React.useState<boolean | null>(null);
+    const [data, setData] = React.useState<T | null>(initialState);
+    const [errors, setErrors] = React.useState<{ [key: string]: string }>({});
+    const canSaveErrors: { [key: string]: boolean } = {};
+
 
     React.useEffect(() => {
         setData({...initialState});
