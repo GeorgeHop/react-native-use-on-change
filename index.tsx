@@ -35,8 +35,9 @@ export default function useOnChange<T>(
 
         if (formFields?.length) {
             formFields?.forEach((field) => {
-                if (initialState?.[field]?.length)
+                if (initialState?.[field]?.length) {
                     validateData(field, initialState?.[field]);
+                }
             });
         }
     }, [saving, ...deps]);
@@ -54,7 +55,7 @@ export default function useOnChange<T>(
             let formFields = Object.keys(settings.validators);
 
             if (formFields?.length) {
-                let initialErrors:{[key: string]: string} = {};
+                let initialErrors: { [key: string]: string } = {};
 
                 // Check each declarated field
                 formFields?.forEach((field) => {
@@ -103,10 +104,11 @@ export default function useOnChange<T>(
         return (toggledCanSave || Object.values(canSaveErrors).every(item => !!item));
     }, [data, errors, settings.canSaveConfig]);
 
+
     const toggleCanSave = (value: boolean) => setToggleCanSave(value);
 
     // Supports single or multi value
-    const onChange = (target: Target|Target[]) => {
+    const onChange = (target: Target | Target[]) => {
         if (Array.isArray(target)) {
             let preparedData = target?.reduce((acc, curr) => {
                 let fieldName = curr.name;
@@ -165,6 +167,7 @@ export default function useOnChange<T>(
             let validationError;
 
             for (let validationFunc of valueValidators) {
+                // Data used in cases if function has a second argument for example to check password confirmation with password field
                 const validate = validationFunc(fieldValue, data);
 
                 if (validate) {
@@ -174,17 +177,17 @@ export default function useOnChange<T>(
             }
 
             if (!validationError) {
-                setErrors({
+                setErrors(errors => ({
                     ...errors,
                     [fieldName]: ''
-                });
+                }));
                 return;
             }
 
-            setErrors({
+            setErrors(errors => ({
                 ...errors,
                 [fieldName]: validationError
-            });
+            }));
         }
     };
 
