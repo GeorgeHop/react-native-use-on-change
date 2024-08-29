@@ -51,28 +51,34 @@ export default function useOnChange<T>(
         const config = settings?.canSaveConfig;
 
         // If we don't have validators we skip this part
-        if (!!settings?.validators) {
-            let formFields = Object.keys(settings.validators);
+        if (!!settings?.validators) return;
 
-            if (formFields?.length) {
-                let initialErrors: { [key: string]: string } = {};
+        let formFields = Object.keys(settings.validators);
 
-                // Check each declarated field
-                formFields?.forEach((field) => {
-                    const validate = validateField(field, initialState?.[field]);
+        if (formFields?.length) {
+            let initialErrors: { [key: string]: string } = {};
 
-                    // We setup errors for cantSaveUnchanged to proper validate all values
-                    if ((config?.cantSaveUnchanged && initialState?.[field]?.length)) {
-                        initialErrors[field] = '';
-                        // Skip not required fields (For cases when form has few not required fields)
-                    } else if ((initialState?.[field]?.length && settings?.validators?.[field]) || (initialState?.[field]?.length === 0 && settings?.validators?.[field] && !validate)) {
-                        // Check all validators
-                        initialErrors[field] = validate;
-                    }
-                });
+            // Check each declarated field
+            formFields?.forEach((field) => {
+                const validate = validateField(field, initialState?.[field]);
+                const fieldExistinState = initialState?.[field]?.length;
+                const fieldExistInValidator = settings?.validators?.[field];
 
-                setErrors(initialErrors);
-            }
+                // We setup errors for cantSaveUnchanged to proper validate all values
+                if ((config?.cantSaveUnchanged && fieldExistinState)) {
+                    initialErrors[field] = '';
+                    // Skip not required fields (For cases when form has few not required fields)
+                    // Field listed in state but no validator specified
+                } else if ((fieldExistinState && !fieldExistInValidator)) {
+                    // Check all validators
+                    initialErrors[field] = '';
+                    // Field listed in both state and validators so we validate everything
+                } else {
+                    initialErrors[field] = validate;
+                }
+            });
+
+            setErrors(initialErrors);
         }
     };
 
