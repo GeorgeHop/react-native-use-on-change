@@ -47,38 +47,37 @@ export default function useOnChange<T>(
         checkErrors();
     }, []);
 
-    const checkErrors = (cantSaveUnchanged = true) => {
+    const checkErrors = () => {
+        const validators = settings?.validators;
         const config = settings?.canSaveConfig;
 
-        // If we don't have validators we skip this part
-        if (!!settings?.validators) return;
+        // If no validators are provided, we skip the error initialization
+        if (!validators) return;
 
-        let formFields = Object.keys(settings.validators);
+        const formFields = Object.keys(validators);
+        const initialErrors: { [key: string]: string } = {};
+        let formHasChanged = false;
 
-        if (formFields?.length) {
-            let initialErrors: { [key: string]: string } = {};
+        formFields.forEach((field) => {
+            const fieldValue = initialState?.[field];
+            const validate = validateField(field, fieldValue);
 
-            // Check each declarated field
-            formFields?.forEach((field) => {
-                const validate = validateField(field, initialState?.[field]);
-                const fieldExistinState = initialState?.[field]?.length;
-                const fieldExistInValidator = settings?.validators?.[field];
-
-                // We setup errors for cantSaveUnchanged to proper validate all values
-                if ((config?.cantSaveUnchanged && fieldExistinState)) {
-                    initialErrors[field] = '';
-                    // Skip not required fields (For cases when form has few not required fields)
-                    // Field listed in state but no validator specified
-                } else if ((fieldExistinState && !fieldExistInValidator)) {
-                    // Check all validators
-                    initialErrors[field] = '';
-                    // Field listed in both state and validators so we validate everything
-                } else {
-                    initialErrors[field] = validate;
+            // Handle cantSaveUnchanged logic and validation for fields in validators
+            if (config?.cantSaveUnchanged && fieldValue?.length) {
+                initialErrors[field] = '';
+                if (data?.[field] !== initialState?.[field]) {
+                    formHasChanged = true;  // Track changes even for non-validated fields
                 }
-            });
+            } else if ((fieldValue?.length && validators?.[field]) || (fieldValue?.length === 0 && validators?.[field] && !validate)) {
+                initialErrors[field] = validate;
+            }
+        });
 
-            setErrors(initialErrors);
+        setErrors(initialErrors);
+
+        // Toggle canSaveUnchanged if form has changed
+        if (config?.cantSaveUnchanged && formHasChanged) {
+            setToggleCanSave(true);
         }
     };
 
@@ -115,86 +114,37 @@ export default function useOnChange<T>(
 
     // Supports single or multi value
     const onChange = (target: Target | Target[]) => {
-        if (Array.isArray(target)) {
-            let preparedData = target?.reduce((acc, curr) => {
-                let fieldName = curr.name;
-                let fieldValue = curr.value;
-                acc[fieldName] = fieldValue;
+        const updatedData = Array.isArray(target)
+            ? target.reduce((acc, { name, value }) => ({ ...acc, [name]: value }), {})
+            : { [target.name]: target.value };
 
-                return acc;
-            }, {});
+        const newData = { ...data, ...updatedData };
+        setData(newData);
 
-            let saveData = {
-                ...data,
-                ...preparedData
-            };
-
-            multiValidate(preparedData);
-            return;
-        }
-
-        if (typeof target === "object" && target.hasOwnProperty('name') && target.hasOwnProperty('value')) {
-            let fieldName = target.name;
-            let fieldValue = target.value;
-            let newData = {
-                ...data,
-                [fieldName]: fieldValue
-            };
-
-            setData(newData);
-
-            validateData(fieldName, fieldValue);
-        }
-    };
-
-    const multiValidate = (fields: object) => {
-        Object.keys(fields)?.forEach(key => {
-            validateData(key, fields[key]);
+        Object.keys(updatedData).forEach(fieldName => {
+            validateData(fieldName, updatedData[fieldName]);
         });
     };
 
-    const validateField = (fieldName: string, fieldValue: any) => {
-        let valueValidators = settings.validators?.[fieldName];
-        let validationError;
-
-        for (let validationFunc of valueValidators) {
-            if (!!validationFunc(fieldValue, data)) {
-                validationError = validationFunc(fieldValue, data);
-                break;
-            }
+    const runValidators = (validators: Function[], fieldValue: any, data: T | null) => {
+        for (let validate of validators) {
+            const validationError = validate(fieldValue, data);
+            if (validationError) return validationError;
         }
+        return '';
+    };
 
-        return !validationError ? '' : validationError;
+    const validateField = (fieldName: string, fieldValue: any) => {
+        const validators = settings.validators?.[fieldName];
+        return validators ? runValidators(validators, fieldValue, data) : '';
     };
 
     const validateData = (fieldName: string, fieldValue: any) => {
-        if (!!settings?.validators && !isEmptyObject(settings?.validators) && !!settings.validators[fieldName]) {
-            let valueValidators = settings.validators?.[fieldName];
-            let validationError;
-
-            for (let validationFunc of valueValidators) {
-                // Data used in cases if function has a second argument for example to check password confirmation with password field
-                const validate = validationFunc(fieldValue, data);
-
-                if (validate) {
-                    validationError = validate;
-                    break;
-                }
-            }
-
-            if (!validationError) {
-                setErrors(errors => ({
-                    ...errors,
-                    [fieldName]: ''
-                }));
-                return;
-            }
-
-            setErrors(errors => ({
-                ...errors,
-                [fieldName]: validationError
-            }));
-        }
+        const validationError = validateField(fieldName, fieldValue);
+        setErrors(prevErrors => ({
+            ...prevErrors,
+            [fieldName]: validationError
+        }));
     };
 
     const cleanUp = React.useCallback(() => {
