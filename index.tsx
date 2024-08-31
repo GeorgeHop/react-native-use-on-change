@@ -27,7 +27,6 @@ export default function useOnChange<T>(
     const [errors, setErrors] = React.useState<{ [key: string]: string }>({});
     const canSaveErrors: { [key: string]: boolean } = {};
 
-
     React.useEffect(() => {
         setData({...initialState});
         setErrors({});
@@ -43,10 +42,9 @@ export default function useOnChange<T>(
     }, [saving, ...deps]);
 
     // This part checking existing fields and fills errors based on data inside
-    React.useEffect(() => {
-        checkErrors();
-    }, []);
+    React.useEffect(() => checkErrors(), []);
 
+    // This part makes initial data validation for default logic and cantSaveUnchaged
     const checkErrors = () => {
         const validators = settings?.validators;
         const config = settings?.canSaveConfig;
@@ -56,7 +54,6 @@ export default function useOnChange<T>(
 
         const formFields = Object.keys(validators);
         const initialErrors: { [key: string]: string } = {};
-        let formHasChanged = false;
 
         formFields.forEach((field) => {
             const fieldValue = initialState?.[field];
@@ -65,26 +62,17 @@ export default function useOnChange<T>(
             // Handle cantSaveUnchanged logic and validation for fields in validators
             if (config?.cantSaveUnchanged && fieldValue?.length) {
                 initialErrors[field] = '';
-                if (data?.[field] !== initialState?.[field]) {
-                    formHasChanged = true;  // Track changes even for non-validated fields
-                }
             } else if ((fieldValue?.length && validators?.[field]) || (fieldValue?.length === 0 && validators?.[field] && !validate)) {
                 initialErrors[field] = validate;
             }
         });
 
         setErrors(initialErrors);
-
-        // Toggle canSaveUnchanged if form has changed
-        if (config?.cantSaveUnchanged && formHasChanged) {
-            setToggleCanSave(true);
-        }
     };
 
     const canSave = React.useMemo(() => {
         const canSave = settings?.canSaveConfig?.canSave;
         const canSaveConfig = settings?.canSaveConfig;
-
         // We get only those fiends which added in validators array
         const initialStateToCheck = getEqualValidationValues(initialState, settings?.validators);
         const dataToCheck = getEqualValidationValues(data, settings?.validators);
@@ -109,37 +97,49 @@ export default function useOnChange<T>(
         return (toggledCanSave || Object.values(canSaveErrors).every(item => !!item));
     }, [data, errors, settings.canSaveConfig]);
 
-
     const toggleCanSave = (value: boolean) => setToggleCanSave(value);
 
     // Supports single or multi value
     const onChange = (target: Target | Target[]) => {
+        // Get updated value
         const updatedData = Array.isArray(target)
             ? target.reduce((acc, { name, value }) => ({ ...acc, [name]: value }), {})
             : { [target.name]: target.value };
 
+        // Merge new and old state
         const newData = { ...data, ...updatedData };
+        // Set data without validation?
         setData(newData);
-
-        Object.keys(updatedData).forEach(fieldName => {
-            validateData(fieldName, updatedData[fieldName]);
+        // And then we validate fields only related to updated data? so how hookWillKnow about updated fields
+        Object.keys(newData).forEach(fieldName => {
+            const value = newData?.[fieldName];
+            validateData(fieldName, value);
         });
     };
 
     const runValidators = (validators: Function[], fieldValue: any, data: T | null) => {
-        for (let validate of validators) {
-            const validationError = validate(fieldValue, data);
-            if (validationError) return validationError;
+        // Validate if validators exist
+        if (validators) {
+            for (let validate of validators) {
+                const validationError = validate(fieldValue, data);
+                if (validationError) return validationError;
+            }
         }
+
+        // If no validators just toggle
         return '';
     };
 
+    // ToDo this part shows only fields listed in validators
     const validateField = (fieldName: string, fieldValue: any) => {
+        // Get validators if they exist
         const validators = settings.validators?.[fieldName];
-        return validators ? runValidators(validators, fieldValue, data) : '';
+        // If validators exist we validate in other case return empty string to toggle canSave
+        return runValidators(validators, fieldValue, data);
     };
 
     const validateData = (fieldName: string, fieldValue: any) => {
+        // Validate error should be error string or empty string
         const validationError = validateField(fieldName, fieldValue);
         setErrors(prevErrors => ({
             ...prevErrors,
