@@ -17,24 +17,33 @@ export const arraysEqual = (aArr: any[], bArr: any[]) => {
     return true;
 };
 
-export const getEqualValidationValues = (obj: InitialState|null, values: Validators|undefined) => {
+export const getEqualValidationValues = (obj: InitialState|null, validators: Validators|undefined) => {
     let newObj = {};
 
     if (!obj)
         return newObj;
 
+    // Go and check every field
     for (const [key, value] of Object.entries(obj)) {
-        if (!!values && values.hasOwnProperty(key))
+        // If field is no required add value to result
+        if (!validators?.[key])
+            newObj[key] = value;
+
+        // Validator exist and data key is equal add value to result
+        if (!!validators && validators.hasOwnProperty(key))
             newObj[key] = value;
     }
 
     return newObj;
 };
 
+export const excludeNotRequired = (arr1, arr2) => arr1.filter(value => arr2.includes(value));;
 export const errorsValuesExist = (errors: {[key: string]: any}) => Object.values(errors).some(value => value !== '');
 export const defaultValidation = (errors: {[key: string]: any}, settings: Settings) => {
+    const errorKeys = excludeNotRequired(Object.keys(errors), Object.keys(settings.validators));
+
     if (!settings?.validators)
         return false;
 
-    return (arraysEqual(Object.keys(errors), Object.keys(settings.validators)) && !errorsValuesExist(errors))
+    return (arraysEqual(errorKeys, Object.keys(settings.validators)) && !errorsValuesExist(errors))
 };
