@@ -129,6 +129,8 @@ export default function Container() {
         initialState: {
             field1: '',
             field2: '',
+            // Field 3 is not required
+            field3: '',
         },
         // Validators with validate functions for each field
         validators: {
@@ -143,7 +145,8 @@ export default function Container() {
                 maxLength(255, 'Max is 255'),
                 // We added our custom validator
                 customValidator('Sample string', 'Value should be sample string')
-            ]
+            ],
+            // If we want validation to skip field3 we just do not list it here
         },
         config: {
             // Method for saving
@@ -152,7 +155,7 @@ export default function Container() {
             }
         },
         canSaveConfig: {
-            // If data should not be equal to save
+            // For example if we have edit flow, when button should toggle when data in form has changed
             cantSaveUnchanged: true,
             // Custom validation checker
             validationFunction: (data, errors, state) => {
