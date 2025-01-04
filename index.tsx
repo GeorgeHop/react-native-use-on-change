@@ -130,7 +130,6 @@ export default function useOnChange<T>(
         return '';
     };
 
-    // ToDo this part shows only fields listed in validators
     const validateField = (fieldName: string, fieldValue: any) => {
         // Get validators if they exist
         const validators = settings.validators?.[fieldName];
@@ -185,6 +184,7 @@ export default function useOnChange<T>(
         canSave,
         requestFunction,
         saving,
-        toggleCanSave
+        toggleCanSave,
+        cleanUp,
     ];
 };

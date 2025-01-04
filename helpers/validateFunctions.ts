@@ -15,7 +15,11 @@ export const notZero = (message: any) => (value: string) => Number(value) === 0 
 
 export const isRequired = (message: any) => {
     function required(value: any) {
-        return value ? '' : message;
+        if (Array.isArray(value)) {
+            return value.length > 0 ? '' : message;
+        }
+
+        return value ? '' : message; // Valid if truthy
     }
 
     return required;
